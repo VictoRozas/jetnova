@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reserva de vuelo | Despega-Cholis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .boldonse-regular {
+      font-family: "Boldonse", system-ui;
+      font-weight: 400;
+      font-style: normal;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-inter bg-[#f5f6fa] relative">
+  <nav class="sticky top-0 z-50 h-16" style="background-color: #18005c;">
+    <div class="w-full h-full px-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-white font-bold text-xl tracking-tight">Despega-Cholis</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="#" onclick="history.back(); return false;" class="font-semibold text-white px-4 py-1.5 rounded-full" style="background-color: #4b3b8f;">Atrás</a>
+      </div>
+    </div>
+  </nav>
+  <!-- Fondo de la imagen con filtro -->
+  <div class="fixed inset-0 -z-10 bg-cover bg-center" style="background-image: url('img/fondo_avion3.jpg');">
+    <div class="absolute inset-0 bg-white opacity-70"></div>
+  </div>
+  <div class="w-full max-w-xl bg-white shadow-2xl border border-gray-200 p-8 rounded-xl mx-auto mt-12">
+    <h2 class="text-2xl md:text-4xl font-extrabold text-[#18005c] mb-8 text-center drop-shadow-lg boldonse-regular">Reserva tu vuelo</h2>
+    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+      <div class="text-sm text-gray-600">Código de vuelo: <span id="codigo-vuelo" class="font-bold text-[#b30f3b]"></span></div>
+      <div class="text-sm text-gray-600">Salida: <span id="origen-vuelo" class="font-bold text-[#18005c]"></span></div>
+      <div class="text-sm text-gray-600">Destino: <span id="destino-vuelo" class="font-bold text-[#18005c]"></span></div>
+    </div>
+    <div id="info-escalas" class="mb-4 flex items-center gap-2">
+      <span class="text-sm text-[#18005c] font-bold mr-2">Tipo de vuelo:</span>
+      <div id="pills-escalas" class="flex gap-2"></div>
+    </div>
+    <div id="info-equipaje" class="mb-4 flex items-center gap-4">
+      <img id="icono-equipaje" src="" alt="Icono equipaje" class="w-12 h-12 object-contain hidden">
+      <div>
+        <div class="text-sm text-[#18005c] font-bold">Tipo de equipaje: <span id="tipo-equipaje"></span></div>
+        <div class="text-xs text-gray-600" id="desc-equipaje"></div>
+        <div class="text-sm text-[#b30f3b] font-bold" id="precio-equipaje"></div>
+      </div>
+    </div>
+    <form id="form-reserva" class="space-y-5">
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <label for="dni" class="block text-sm font-semibold text-[#18005c] mb-1">DNI</label>
+          <input type="text" id="dni" name="dni" maxlength="8" pattern="[0-9]{8}" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b]" required placeholder="Ej: 12345678">
+        </div>
+        <div class="flex-1">
+          <label for="nombre" class="block text-sm font-semibold text-[#18005c] mb-1">Nombre</label>
+          <input type="text" id="nombre" name="nombre" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b] uppercase" required placeholder="Ej: JUAN">
+        </div>
+      </div>
+      <div>
+        <label for="apellidos" class="block text-sm font-semibold text-[#18005c] mb-1">Apellidos</label>
+        <input type="text" id="apellidos" name="apellidos" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b] uppercase" required placeholder="Ej: PÉREZ GÓMEZ">
+      </div>
+      <div>
+        <label for="fecha" class="block text-sm font-semibold text-[#18005c] mb-1">Fecha de vuelo</label>
+        <input type="date" id="fecha" name="fecha" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b]" required>
+      </div>
+      <div id="horario-section" class="hidden">
+        <label class="block text-sm font-semibold text-[#18005c] mb-1">Horario</label>
+        <div id="horarios-lista" class="flex flex-wrap gap-2 mb-2"></div>
+        <input type="hidden" id="horario" name="horario" required>
+      </div>
+      <div class="flex justify-center">
+        <button type="submit" class="bg-[#168786] text-white px-8 py-2 rounded-lg font-bold hover:bg-[#146e6d] transition">Pasar a pagar</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    // Horarios por fecha
+    const fechaInput = document.getElementById('fecha');
+    const horarioSection = document.getElementById('horario-section');
+    const horariosLista = document.getElementById('horarios-lista');
+    const horarioInput = document.getElementById('horario');
+    fechaInput.addEventListener('change', function() {
+      if (fechaInput.value) {
+        horarioSection.classList.remove('hidden');
+        horariosLista.innerHTML = '';
+        horarioInput.value = '';
+        // Determinar el día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado)
+        const fecha = new Date(fechaInput.value);
+        const diaSemana = fecha.getDay();
+        let horariosDisponibles = [];
+        switch (diaSemana) {
+          case 0: // Domingo
+            horariosDisponibles = ['07:00', '10:30', '18:00']; break;
+          case 1: // Lunes
+            horariosDisponibles = ['06:15', '12:00', '20:00']; break;
+          case 2: // Martes
+            horariosDisponibles = ['05:45', '14:30', '19:15']; break;
+          case 3: // Miércoles
+            horariosDisponibles = ['08:00', '13:45', '21:00']; break;
+          case 4: // Jueves
+            horariosDisponibles = []; break;
+          case 5: // Viernes
+            horariosDisponibles = ['04:55', '09:30', '16:20']; break;
+          case 6: // Sábado
+            horariosDisponibles = ['11:00', '15:00', '22:10']; break;
+        }
+        if (horariosDisponibles.length === 0) {
+          horariosLista.innerHTML = '<span class="text-sm text-gray-500">No hay horarios disponibles para esta fecha.</span>';
+          return;
+        }
+        horariosDisponibles.forEach(h => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = h;
+          btn.className = 'horario-pill px-5 py-1 rounded-full bg-blue-100 text-[#18005c] font-semibold transition-colors duration-200 border-none outline-none';
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.horario-pill').forEach(b => b.className = 'horario-pill px-5 py-1 rounded-full bg-blue-100 text-[#18005c] font-semibold transition-colors duration-200 border-none outline-none');
+            btn.className = 'horario-pill px-5 py-1 rounded-full bg-[#18005c] text-white font-semibold transition-colors duration-200 border-none outline-none';
+            horarioInput.value = h;
+          });
+          horariosLista.appendChild(btn);
+        });
+      } else {
+        horarioSection.classList.add('hidden');
+        horariosLista.innerHTML = '';
+        horarioInput.value = '';
+      }
+    });
+    // Validar que se seleccione una fecha y horario, y guardar datos para pago
+    const form = document.getElementById('form-reserva');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!fechaInput.value || !horarioInput.value) {
+        alert('Por favor selecciona una fecha y un horario.');
+        return;
+      }
+      
+      // Guardar datos del pasajero en localStorage para la página de pago
+      const nombre = document.getElementById('nombre').value;
+      const apellidos = document.getElementById('apellidos').value;
+      const fecha = document.getElementById('fecha').value;
+      const horario = document.getElementById('horario').value;
+      
+      localStorage.setItem('nombrePasajero', nombre);
+      localStorage.setItem('apellidosPasajero', apellidos);
+      localStorage.setItem('fechaVuelo', fecha);
+      localStorage.setItem('horarioVuelo', horario);
+      
+      // Redirigir a la página de pago
+      window.location.href = 'pago.html';
+    });
+    // Mostrar datos de vuelo (estos se deben pasar por localStorage o query params)
+    document.getElementById('codigo-vuelo').textContent = localStorage.getItem('codigoVuelo') || 'DC0000';
+    document.getElementById('origen-vuelo').textContent = localStorage.getItem('origenVuelo') || '---';
+    document.getElementById('destino-vuelo').textContent = localStorage.getItem('destinoVuelo') || '---';
+    // Mostrar información de equipaje seleccionada
+    const tipoEquipaje = localStorage.getItem('tipoEquipaje') || '';
+    const descEquipaje = localStorage.getItem('descripcionEquipaje') || '';
+    const precioEquipaje = localStorage.getItem('precioEquipaje') || '';
+    const iconoEquipaje = localStorage.getItem('iconoEquipaje') || '';
+    document.getElementById('tipo-equipaje').textContent = tipoEquipaje;
+    document.getElementById('desc-equipaje').textContent = descEquipaje;
+    document.getElementById('precio-equipaje').textContent = precioEquipaje ? `USD ${precioEquipaje}` : '';
+    if (iconoEquipaje) {
+      const icono = document.getElementById('icono-equipaje');
+      icono.src = iconoEquipaje;
+      icono.classList.remove('hidden');
+    }
+    document.getElementById('nombre').addEventListener('input', function() {
+      this.value = this.value.toUpperCase();
+    });
+    document.getElementById('apellidos').addEventListener('input', function() {
+      this.value = this.value.toUpperCase();
+    });
+    // Mostrar tipo de vuelo y escalas
+    const tipoVuelo = localStorage.getItem('tipoVuelo') || '';
+    let escalasVuelo = localStorage.getItem('escalasVuelo') || '';
+    let pillsEscalas = document.getElementById('pills-escalas');
+    if (tipoVuelo.toLowerCase() === 'directo' || !escalasVuelo || escalasVuelo === '[]') {
+      pillsEscalas.innerHTML = '<span class="px-4 py-1 rounded-full bg-blue-100 text-[#18005c] font-semibold">DIRECTO</span>';
+    } else {
+      // Puede venir como string tipo 'LIMA,MIAMI' o como array stringificado
+      let escalas = [];
+      try {
+        escalas = JSON.parse(escalasVuelo);
+        if (!Array.isArray(escalas)) throw 0;
+      } catch {
+        escalas = escalasVuelo.split(',').map(e => e.trim()).filter(Boolean);
+      }
+      pillsEscalas.innerHTML = escalas.map(e => `<span class="px-4 py-1 rounded-full bg-blue-100 text-[#18005c] font-semibold">${e.toUpperCase()}</span>`).join('');
+    }
+  </script>
+  <script src="reserva.js"></script>
+  <footer class="w-full h-16 bg-gray-100 flex items-center justify-center fixed bottom-0 left-0 z-40">
+    <span class="text-xs text-gray-500">© 2025 Despega-Cholis. Todos los derechos reservados.</span>
+  </footer>
+</body>
+</html>

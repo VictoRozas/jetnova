@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resultados de vuelos | Despega-Cholis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Neuton:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100;400;600;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .equipaje-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease-in-out, padding 0.3s, box-shadow 0.3s, border 0.3s, margin 0.3s;
+      padding: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      margin-top: 0 !important;
+    }
+    .equipaje-panel.abierto {
+      max-height: 600px;
+      padding: 0 1.5rem 1.5rem 1.5rem !important; /* px-6 pb-6 */
+      border-left: 1px solid #e2e8f0 !important;
+      border-right: 1px solid #e2e8f0 !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      border-top: 0 !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+      margin-top: -0.25rem !important; /* -mt-1 */
+    }
+    .noto-sans-equipaje {
+      font-family: "Noto Sans", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 600;
+      font-style: normal;
+      font-variation-settings:
+        "wdth" 100;
+    }
+    .ubuntu-medium {
+      font-family: "Ubuntu", sans-serif;
+      font-weight: 500;
+      font-style: normal;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-inter bg-[#f5f6fa] relative">
+  <!-- Fondo de la imagen con filtro -->
+  <div class="fixed inset-0 -z-10 bg-cover bg-center" style="background-image: url('img/fondo_avion2.jpg');">
+    <div class="absolute inset-0 bg-white opacity-70"></div>
+  </div>
+  <!-- Barra de navegación -->
+  <nav class="sticky top-0 z-50 h-16 bg-[#18005c]">
+    <div class="w-full h-full px-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-white font-bold text-xl tracking-tight">Despega-Cholis</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="index.html" class="font-semibold text-white px-4 py-1.5 rounded-full bg-[#4b3b8f]">Regresar</a>
+      </div>
+    </div>
+  </nav>
+  <!-- Resultados -->
+  <main class="flex flex-col items-center justify-center min-h-[80vh] px-4">
+    <div class="w-full max-w-4xl mx-auto mt-12">
+      <h2 class="text-3xl md:text-5xl font-extrabold text-[#18005c] mb-8 text-center drop-shadow-lg">Resultados de vuelos</h2>
+      <div id="mensaje-disponibilidad" class="text-center mb-6 text-lg font-semibold text-[#b30f3b]"></div>
+      <div id="vuelos-lista" class="flex flex-col gap-6"></div>
+      <div id="empty-state" class="text-center py-12 hidden">
+        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-slate-600 mb-2">No se encontraron vuelos</h3>
+        <p class="text-slate-500">Intenta con diferentes ciudades o tipos de vuelo</p>
+      </div>
+    </div>
+  </main>
+  <script>
+    const opcionesEquipaje = [
+      {
+        tipo: "Pequeño",
+        descripcion: "Equipaje de mano: hasta 8 kg. Tamaño máximo: 40 x 30 x 20 cm. Ideal para laptop, mochila o bolso pequeño. Incluido sin costo.",
+        precio: 0
+      },
+      {
+        tipo: "Mediano",
+        descripcion: "Maleta facturada: hasta 23 kg. Tamaño máximo: 158 cm lineales (alto+ancho+profundo). Perfecto para viajes de 1 semana.",
+        precio: 25
+      },
+      {
+        tipo: "Grande",
+        descripcion: "Maleta extra grande: hasta 32 kg. Tamaño máximo: 203 cm lineales. Ideal para mudanzas o largas estancias.",
+        precio: 45
+      }
+    ];
+
+    const vuelosLista = document.getElementById('vuelos-lista');
+    const mensaje = document.getElementById('mensaje-disponibilidad');
+    const emptyState = document.getElementById('empty-state');
+
+    function formatearHora(horaBase, minutosExtra = 0) {
+      let [h, m] = horaBase.split(':').map(Number);
+      let date = new Date();
+      date.setHours(h, m + minutosExtra, 0, 0);
+      let hh = String(date.getHours()).padStart(2, '0');
+      let mm = String(date.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function cerrarTodosLosPaneles() {
+      document.querySelectorAll('.equipaje-panel').forEach(panel => {
+        panel.classList.remove('abierto');
+      });
+      window.panelEquipajeAbierto = null;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const datos = JSON.parse(localStorage.getItem('consultaVuelos') || '{}');
+      if (!datos.origen || !datos.destino || !datos.tipo) {
+        window.location.href = 'index.html';
+        return;
+      }
+      mensaje.textContent = 'Cargando resultados...';
+      fetch('http://localhost:5000/consultar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.disponibilidad && data.vuelos.length > 0) {
+          mensaje.textContent = `¡Encontramos ${data.vuelos.length} vuelo${data.vuelos.length > 1 ? 's' : ''} disponible${data.vuelos.length > 1 ? 's' : ''}!`;
+          vuelosLista.innerHTML = '';
+          data.vuelos.forEach((vuelo, idx) => {
+            let horaSalida = formatearHora("04:55", idx * 25);
+            let horaLlegada = formatearHora("06:15", idx * 25);
+            let precioBase = (125.79 - idx * 10);
+            let precio = precioBase.toFixed(2);
+            // Generar identificador aleatorio tipo DCxxxx
+            let idVuelo = `DC${Math.floor(1000 + Math.random() * 9000)}`;
+
+            vuelosLista.innerHTML += `
+              <div class="vuelo-wrapper mb-6">
+                <!-- Tarjeta principal de vuelo - tamaño fijo -->
+                <div class="bg-white rounded-t-2xl shadow-lg p-6 flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-100 relative group cursor-pointer transition-all duration-300 hover:shadow-xl vuelo-container" id="vuelo-${idx}">
+                  <div class="flex flex-col md:flex-row items-center w-full gap-6">
+                    <!-- IZQUIERDA: Identificador de vuelo y escalas -->
+                    <div class="flex flex-col items-start min-w-[180px] max-w-[220px] flex-shrink-0">
+                      <div class="flex items-center gap-2 mb-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 17C8.5 17 10 15 12 15C14 15 15.5 17 17 17" stroke="#b30f3b" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M12 15V7" stroke="#18005c" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-extrabold text-[#18005c]">${idVuelo}</span>
+                      </div>
+                      <div class="text-xs text-gray-500 mb-1">${vuelo.escalas.length === 0 ? 'Directo' : `${vuelo.escalas.length} escala${vuelo.escalas.length > 1 ? 's' : ''}`}</div>
+                      <div class="flex flex-wrap gap-2">
+                        ${vuelo.escalas.map(e => `<span class="bg-blue-100 text-[#18005c] font-semibold px-3 py-0.5 rounded-full text-xs tracking-wide">${e.toUpperCase()}</span>`).join('')}
+                      </div>
+                    </div>
+                    <!-- CENTRO: Salida, avión, destino -->
+                    <div class="flex flex-1 flex-col md:flex-row items-center justify-center gap-8 w-full">
+                      <div class="flex flex-col items-center">
+                        <span class="text-xs text-gray-500 mb-1">Salida</span>
+                        <span class="text-2xl font-extrabold text-[#b30f3b] mt-1">${vuelo.origen.toUpperCase()}</span>
+                      </div>
+                      <div class="flex flex-col items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="w-12 h-12 text-[#18005c]">
+                          <path d="M14.0311 18.54L10.7001 25.3923L12.8966 25.2218L17.1454 20.4927C17.2393 20.3791 17.3622 20.3152 17.5139 20.301C17.6656 20.2868 17.803 20.3294 17.9186 20.4217C18.0342 20.514 18.0992 20.6347 18.1137 20.7838C18.1281 20.933 18.0703 21.0679 17.9547 21.1815L13.7421 25.8751C13.6481 25.9887 13.5253 26.081 13.3736 26.152C13.2218 26.223 13.0484 26.2656 12.8606 26.2941L10.028 26.5C9.76792 26.5 9.57287 26.3935 9.4428 26.1876C9.31274 25.9816 9.29824 25.7615 9.39217 25.5272L12.6872 18.8453H8.12044L5.8227 21.5933C5.70709 21.7567 5.55536 21.8774 5.38194 21.9555C5.20852 22.0336 5.02065 22.0762 4.83278 22.0762H2.91794C2.56388 22.0762 2.31094 21.9768 2.1592 21.778C2.00746 21.5791 1.97856 21.3235 2.07249 20.9969L3.77053 15.9482L2.07249 11.0416C1.95688 10.715 1.97854 10.4522 2.14473 10.2392C2.31093 10.0333 2.57111 9.92677 2.92517 9.92677H4.90502C5.07121 9.92677 5.2302 9.96936 5.38194 10.0475C5.53368 10.1256 5.68541 10.2534 5.8227 10.4096L8.12044 13.1221H12.6872L9.42834 6.51129C9.28382 6.23436 9.28381 5.98582 9.41387 5.77989C9.54393 5.57397 9.75347 5.48169 10.0353 5.503L12.8678 5.7089C13.034 5.73021 13.1929 5.77992 13.3446 5.85093C13.4964 5.92194 13.6337 6.01426 13.7493 6.12787L20.0501 13.1221H27.0952C27.8973 13.1221 28.5837 13.399 29.1473 13.96C29.7109 14.5139 30 15.1885 30 15.9766C30 16.7648 29.7182 17.4394 29.1473 17.9932C28.5837 18.5471 27.8973 18.8311 27.0952 18.8311H20.1875C20.0213 18.8311 19.884 18.7814 19.7828 18.6749C19.6744 18.5684 19.6238 18.4477 19.6238 18.3128C19.6238 18.1495 19.6744 18.0146 19.7828 17.9151C19.8912 17.8086 20.0213 17.7589 20.1875 17.7589H27.0952C27.5938 17.7589 28.0129 17.5885 28.367 17.2406C28.721 16.8926 28.8944 16.4737 28.8944 15.9908C28.8944 15.5009 28.721 15.0891 28.367 14.7411C28.0129 14.3932 27.5866 14.2227 27.0952 14.2227H19.8045C19.7106 14.2227 19.6311 14.2085 19.5588 14.173C19.4866 14.1375 19.4288 14.0949 19.3854 14.0523L12.9039 6.81662L10.7073 6.6746L14.0384 13.4558C14.154 13.6618 14.1612 13.8464 14.0528 13.9955C13.9444 14.1446 13.7782 14.2227 13.5397 14.2227H7.98319C7.91093 14.244 7.84589 14.244 7.78808 14.2227C7.73027 14.2014 7.67249 14.173 7.62913 14.1517C7.57855 14.1304 7.51351 14.0736 7.43403 13.9955C7.35454 13.9174 7.25335 13.8038 7.13051 13.6618L4.89778 11.0203H3.19975L4.78938 15.579C4.81106 15.6287 4.83278 15.6855 4.84001 15.7494C4.85446 15.8204 4.85439 15.8772 4.85439 15.9198C4.85439 15.9695 4.84723 16.0335 4.84001 16.1116C4.82556 16.1897 4.81106 16.2535 4.78938 16.3033L3.19975 20.9969H4.89778L7.44849 17.972C7.49907 17.901 7.55689 17.8512 7.6436 17.8157C7.72308 17.7802 7.81701 17.766 7.91095 17.766H13.5397C13.7782 17.766 13.9444 17.837 14.0384 17.972C14.1251 18.1211 14.1251 18.3057 14.0311 18.54Z" fill="currentColor"></path>
+                        </svg>
+                      </div>
+                      <div class="flex flex-col items-center">
+                        <span class="text-xs text-gray-500 mb-1">Destino</span>
+                        <span class="text-2xl font-extrabold text-[#b30f3b] mt-1">${vuelo.destino.toUpperCase()}</span>
+                      </div>
+                    </div>
+                    <!-- DERECHA: Precio -->
+                    <div class="flex flex-col items-end min-w-[160px] max-w-[200px] flex-shrink-0">
+                      <div class="text-xs text-gray-500 mb-1">Costo</div>
+                      <div class="text-2xl font-bold text-[#18005c]" id="precio-vuelo-${idx}">USD ${precio}</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Panel de equipaje como extensión de la tarjeta -->
+                <div class="equipaje-panel bg-white rounded-b-2xl" id="equipaje-panel-${idx}">
+                  <div class="flex justify-between items-center mb-2">
+                    <div class="noto-sans-equipaje text-black pt-4 text-lg mb-4">Selecciona el Tipo de Equipaje</div>
+                    <button class="cerrar-equipaje-btn bg-[#b30f3b] text-white text-xs font-bold rounded-full px-3 py-1 mr-8 shadow hover:bg-red-700 transition" style="margin-top: 0.5rem;" data-idx="${idx}">Cerrar</button>
+                  </div>
+                  <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    ${opcionesEquipaje.map((op, i) => `
+                      <label class="flex-1 cursor-pointer border rounded-lg p-4 flex flex-col items-center gap-2 bg-white hover:border-[#b30f3b] transition">
+                        <input type="radio" name="equipaje-${idx}" value="${i}" class="sr-only">
+                        <span class="flex items-center gap-2">
+                          ${i === 0 ? `<img src='img/equipaje1.png' alt='Equipaje pequeño' class='w-10 h-10 object-contain'>` : ''}
+                          ${i === 1 ? `<img src='img/equipaje2.png' alt='Equipaje mediano' class='w-10 h-10 object-contain'>` : ''}
+                          ${i === 2 ? `<img src='img/equipaje3.png' alt='Equipaje de bobeda' class='w-10 h-10 object-contain'>` : ''}
+                          <span class="text-lg font-bold text-[#18005c]">${op.tipo}</span>
+                        </span>
+                        <span class="text-xs text-gray-500 text-center tinos-bold">${op.descripcion}</span>
+                        <span class="text-[#b30f3b] font-bold">USD ${op.precio}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                  <div class="flex gap-4">
+                    <button class="aplicar-equipaje-btn ubuntu-medium bg-[#18005c] text-white px-6 py-2 rounded-lg font-bold hover:bg-[#4b3b8f] transition" data-idx="${idx}">Aplicar</button>
+                    <button class="reservar-btn ubuntu-medium bg-[#168786] text-white py-2 px-6 rounded-lg font-bold hover:scale-105 hover:shadow-lg transition tracking-wide shadow hidden" data-idx="${idx}">Reservar</button>
+                  </div>
+                  <div class="mt-2 text-sm text-[#b30f3b] font-semibold hidden" id="msg-equipaje-${idx}"></div>
+                </div>
+              </div>
+            `;
+          });
+
+          // Asignar listeners después de generar el HTML
+          setTimeout(() => {
+            // Listener para abrir el panel al hacer click en la tarjeta
+            document.querySelectorAll('.vuelo-container').forEach((container, idx) => {
+              container.addEventListener('click', function(e) {
+                // Si el click fue en el panel de equipaje o en un botón, no hacer nada
+                if (
+                  e.target.closest('.equipaje-panel') ||
+                  e.target.closest('.aplicar-equipaje-btn') ||
+                  e.target.closest('.cancelar-equipaje-btn') ||
+                  e.target.closest('.reservar-btn') ||
+                  e.target.closest('input[type=radio]')
+                ) return;
+                
+                cerrarTodosLosPaneles();
+                const panel = document.getElementById(`equipaje-panel-${idx}`);
+                panel.classList.add('abierto');
+                window.panelEquipajeAbierto = panel;
+                
+                // Scroll suave hacia el panel
+                setTimeout(() => {
+                  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+              });
+            });
+
+            // Cerrar panel al hacer click fuera
+            document.addEventListener('mousedown', function(e) {
+              if (
+                window.panelEquipajeAbierto &&
+                !e.target.closest('.equipaje-panel') &&
+                !e.target.closest('.vuelo-container')
+              ) {
+                cerrarTodosLosPaneles();
+              }
+            });
+
+            document.querySelectorAll('.cerrar-equipaje-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = this.dataset.idx;
+                document.getElementById(`equipaje-panel-${idx}`).classList.remove('abierto');
+                window.panelEquipajeAbierto = null;
+              });
+            });
+
+            document.querySelectorAll('.aplicar-equipaje-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = this.dataset.idx;
+                const radios = document.getElementsByName(`equipaje-${idx}`);
+                let seleccionado = null;
+                radios.forEach(radio => { if (radio.checked) seleccionado = radio.value; });
+                const msg = document.getElementById(`msg-equipaje-${idx}`);
+                if (seleccionado === null) {
+                  msg.textContent = "Selecciona un tipo de equipaje.";
+                  msg.classList.remove('hidden');
+                  return;
+                }
+                msg.classList.add('hidden');
+                // Actualiza el precio mostrado
+                const precioFinal = (parseFloat((125.79 - idx * 10)) + opcionesEquipaje[seleccionado].precio).toFixed(2);
+                document.getElementById(`precio-vuelo-${idx}`).textContent = `USD ${precioFinal}`;
+                // Muestra el botón de reservar
+                document.querySelector(`#equipaje-panel-${idx} .reservar-btn`).classList.remove('hidden');
+              });
+            });
+
+            document.querySelectorAll('.reservar-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = this.dataset.idx;
+                // Obtener datos del vuelo
+                const vueloCard = document.getElementById(`vuelo-${idx}`);
+                const codigoVuelo = vueloCard.querySelector('.text-xl.font-extrabold').textContent;
+                const destinoVuelo = vueloCard.querySelectorAll('.text-2xl.font-extrabold')[1].textContent;
+                const origenVuelo = vueloCard.querySelectorAll('.text-2xl.font-extrabold')[0].textContent;
+                // Obtener equipaje seleccionado
+                const radios = document.getElementsByName(`equipaje-${idx}`);
+                let seleccionado = null;
+                radios.forEach(radio => { if (radio.checked) seleccionado = radio.value; });
+                // Si no hay equipaje seleccionado, igual permitir continuar (opcional)
+                const op = seleccionado !== null ? opcionesEquipaje[seleccionado] : {tipo:'Pequeño', descripcion:'', precio:0};
+                // Guardar tipo de vuelo y escalas
+                const vueloData = data.vuelos[idx];
+                const tipoVuelo = vueloData.escalas.length === 0 ? 'Directo' : 'Con escalas';
+                localStorage.setItem('tipoVuelo', tipoVuelo);
+                localStorage.setItem('escalasVuelo', JSON.stringify(vueloData.escalas));
+                // Guardar en localStorage
+                localStorage.setItem('codigoVuelo', codigoVuelo);
+                localStorage.setItem('destinoVuelo', destinoVuelo);
+                localStorage.setItem('origenVuelo', origenVuelo);
+                localStorage.setItem('tipoEquipaje', op.tipo);
+                localStorage.setItem('descripcionEquipaje', op.descripcion);
+                localStorage.setItem('precioEquipaje', op.precio);
+                localStorage.setItem('iconoEquipaje',
+                  seleccionado == 0 ? 'img/equipaje1.png' : seleccionado == 1 ? 'img/equipaje2.png' : seleccionado == 2 ? 'img/equipaje3.png' : '');
+                // Redirigir a reserva.html
+                window.location.href = 'reserva.html';
+              });
+            });
+
+            // Marcar el equipaje seleccionado con borde rojo usando Tailwind
+            document.querySelectorAll('.equipaje-panel').forEach(panel => {
+              panel.querySelectorAll('input[type=radio]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                  // Quitar el borde rojo de todos los labels hermanos
+                  panel.querySelectorAll('label').forEach(label => {
+                    label.classList.remove('border-2', 'border-[#b30f3b]');
+                    label.classList.add('border', 'border-slate-200');
+                  });
+                  // Agregar el borde rojo al label seleccionado
+                  const label = this.closest('label');
+                  label.classList.remove('border', 'border-slate-200');
+                  label.classList.add('border-2', 'border-[#b30f3b]');
+                });
+              });
+            });
+          }, 0);
+
+          emptyState.classList.add('hidden');
+        } else {
+          mensaje.textContent = 'No se encontraron vuelos disponibles para esta ruta.';
+          vuelosLista.innerHTML = '';
+          emptyState.classList.remove('hidden');
+        }
+      })
+      .catch(() => {
+        mensaje.textContent = 'Error de conexión con el servidor.';
+        vuelosLista.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      });
+    });
+  </script>
+</body>
+</html>

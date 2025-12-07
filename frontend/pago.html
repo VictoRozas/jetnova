@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pago | Despega-Cholis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Librerías para exportar a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .boldonse-regular {
+      font-family: "Boldonse", system-ui;
+      font-weight: 400;
+      font-style: normal;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-inter bg-[#f5f6fa] relative">
+  <nav class="sticky top-0 z-50 h-16" style="background-color: #18005c;">
+    <div class="w-full h-full px-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-white font-bold text-xl tracking-tight">Despega-Cholis</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="#" onclick="history.back(); return false;" class="font-semibold text-white px-4 py-1.5 rounded-full" style="background-color: #4b3b8f;">Atrás</a>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Fondo de la imagen con filtro -->
+  <div class="fixed inset-0 -z-10 bg-cover bg-center" style="background-image: url('img/fondo_avion3.jpg');">
+    <div class="absolute inset-0 bg-white opacity-70"></div>
+  </div>
+  
+  <!-- Ventana flotante de éxito -->
+  <div id="ventana-exito" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center shadow-2xl">
+      <img src="img/pagoexito.png" alt="Pago exitoso" class="w-20 h-20 mx-auto mb-4 block">
+      <h3 class="text-2xl font-bold text-[#18005c] mb-6">Pago Exitoso</h3>
+      <p class="text-gray-600 mb-6">Tu reserva ha sido confirmada exitosamente.</p>
+      <a href="#" onclick="generarPDF(); return false;" class="inline-block bg-[#168786] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#146e6d] transition mb-4">
+        📄 Descargar Check-in PDF
+      </a>
+      <br>
+      <button onclick="window.location.href='index.html'" class="mt-2 bg-[#b30f3b] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#a00e35] transition">
+        Salir
+      </button>
+    </div>
+  </div>
+
+  <div class="w-full max-w-2xl bg-white shadow-2xl border border-gray-200 p-8 rounded-xl mx-auto mt-12">
+    <h2 class="text-2xl md:text-4xl font-extrabold text-[#18005c] mb-8 text-center drop-shadow-lg boldonse-regular">Información de Pago</h2>
+    
+    <!-- Resumen de la reserva -->
+    <div class="bg-gray-50 p-6 rounded-lg mb-6">
+      <h3 class="text-lg font-bold text-[#18005c] mb-4">Resumen de tu reserva</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <span class="text-gray-600">Vuelo:</span>
+          <span id="codigo-vuelo" class="font-bold text-[#b30f3b] ml-2"></span>
+        </div>
+        <div>
+          <span class="text-gray-600">Ruta:</span>
+          <span id="ruta-vuelo" class="font-bold text-[#18005c] ml-2"></span>
+        </div>
+        <div>
+          <span class="text-gray-600">Pasajero:</span>
+          <span id="nombre-pasajero" class="font-bold text-[#18005c] ml-2"></span>
+        </div>
+        <div>
+          <span class="text-gray-600">Fecha:</span>
+          <span id="fecha-vuelo" class="font-bold text-[#18005c] ml-2"></span>
+        </div>
+        <div>
+          <span class="text-gray-600">Equipaje:</span>
+          <span id="equipaje-info" class="font-bold text-[#18005c] ml-2"></span>
+        </div>
+        <div>
+          <span class="text-gray-600">Total:</span>
+          <span id="precio-total" class="font-bold text-[#b30f3b] text-lg ml-2"></span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Formulario de pago -->
+    <form id="form-pago" class="space-y-6">
+      <!-- Información de la tarjeta -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-bold text-[#18005c]">Información de la tarjeta</h3>
+        
+        <div>
+          <label for="numero-tarjeta" class="block text-sm font-semibold text-[#18005c] mb-1">Número de tarjeta</label>
+          <input type="text" id="numero-tarjeta" name="numero-tarjeta" maxlength="19" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b]" required placeholder="1234 5678 9012 3456">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="fecha-vencimiento" class="block text-sm font-semibold text-[#18005c] mb-1">Fecha de vencimiento</label>
+            <input type="text" id="fecha-vencimiento" name="fecha-vencimiento" maxlength="5" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b]" required placeholder="MM/AA">
+          </div>
+          <div>
+            <label for="cvv" class="block text-sm font-semibold text-[#18005c] mb-1">CVV</label>
+            <input type="text" id="cvv" name="cvv" maxlength="4" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#b30f3b]" required placeholder="123">
+          </div>
+        </div>
+        
+        <!-- Logos de tarjetas -->
+        <div class="flex justify-center items-center space-x-4 mt-6">
+          <img src="img/visa.png" alt="Visa" id="logo-visa" class="h-8 opacity-30 transition-opacity duration-300">
+          <img src="img/mastercard.png" alt="Mastercard" id="logo-mastercard" class="h-8 opacity-30 transition-opacity duration-300">
+          <img src="img/americanexpress.png" alt="American Express" id="logo-amex" class="h-8 opacity-30 transition-opacity duration-300">
+        </div>
+      </div>
+      
+
+      
+      <!-- Botón de pago -->
+      <div class="flex justify-center pt-4">
+        <button type="submit" class="bg-[#168786] text-white px-12 py-3 rounded-lg font-bold hover:bg-[#146e6d] transition text-lg">
+          Confirmar Pago
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Div oculto para el QR -->
+  <div id="qr-container" style="display:none;"></div>
+  
+  <script>
+    // Funciones para la ventana de éxito
+    function mostrarVentanaExito() {
+      document.getElementById('ventana-exito').classList.remove('hidden');
+    }
+    
+    function cerrarVentanaExito() {
+      document.getElementById('ventana-exito').classList.add('hidden');
+    }
+    
+   // Función para generar y descargar PDF
+function generarPDF() {
+  // Obtener tipo de vuelo y escalas
+  const tipoVuelo = localStorage.getItem('tipoVuelo') || 'directo';
+  let escalas = localStorage.getItem('escalasVuelo');
+  let lineaEscala = '';
+
+  if (tipoVuelo === 'directo' || !escalas) {
+    // Si es directo, puedes omitir la línea o mostrar "DIRECTO"
+    // lineaEscala = "<div style='margin-bottom: 12px;'><b style='color:#18005c;'>ESCALA:</b> DIRECTO</div>";
+    lineaEscala = ""; // No mostrar nada si es directo
+  } else {
+    try {
+      // Si es un array en string, conviértelo y únelo con comas en mayúsculas
+      const ciudades = JSON.parse(escalas);
+      if (Array.isArray(ciudades)) {
+        lineaEscala = `<div style='margin-bottom: 12px;'><b style='color:#18005c;'>ESCALA:</b> ${ciudades.map(c => c.toUpperCase()).join(', ')}</div>`;
+      } else {
+        lineaEscala = `<div style='margin-bottom: 12px;'><b style='color:#18005c;'>ESCALA:</b> ${escalas.toUpperCase()}</div>`;
+      }
+    } catch {
+      // Si no es JSON, mostrar como está en mayúsculas
+      lineaEscala = `<div style='margin-bottom: 12px;'><b style='color:#18005c;'>ESCALA:</b> ${escalas.toUpperCase()}</div>`;
+    }
+  }
+
+  // Crear datos para el QR code
+  const datosReserva = {
+    codigoVuelo: localStorage.getItem('codigoVuelo') || 'DC0000',
+    origen: localStorage.getItem('origenVuelo') || '---',
+    destino: localStorage.getItem('destinoVuelo') || '---',
+    pasajero: `${localStorage.getItem('nombrePasajero') || '---'} ${localStorage.getItem('apellidosPasajero') || '---'}`,
+    fecha: localStorage.getItem('fechaVuelo') || '---',
+    horario: localStorage.getItem('horarioVuelo') || '---',
+    equipaje: localStorage.getItem('tipoEquipaje') || 'SIN EQUIPAJE'
+  };
+
+  let contenedor = document.createElement('div');
+  contenedor.style.position = 'fixed';
+  contenedor.style.left = '-9999px';
+  contenedor.style.top = '0';
+  contenedor.style.width = '600px';
+  contenedor.innerHTML = `
+    <div style='font-family: Arial, sans-serif; padding: 32px; border-radius: 16px; border: 1px solid #ddd; background: #fff; width: 100%; max-width: 600px; position: relative;'>
+      <div style='text-align:center; margin-bottom: 24px;'>
+        <span style='font-size: 28px; font-weight: bold; color: #18005c;'>CHECK IN VUELO</span>
+      </div>
+      
+      <div style='display: flex; justify-content: space-between; align-items: flex-start;'>
+        <!-- Datos de la reserva -->
+        <div style='flex: 1; margin-right: 20px;'>
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>CÓDIGO DE VUELO:</b> <span>${datosReserva.codigoVuelo}</span></div>
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>RUTA:</b> <span>${datosReserva.origen} → ${datosReserva.destino}</span></div>
+          ${lineaEscala}
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>PASAJERO:</b> <span>${datosReserva.pasajero}</span></div>
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>FECHA DE VUELO:</b> <span>${datosReserva.fecha}</span></div>
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>HORARIO:</b> <span>${datosReserva.horario}</span></div>
+          <div style='margin-bottom: 12px;'><b style='color:#18005c;'>TIPO DE EQUIPAJE:</b> <span>${datosReserva.equipaje}</span></div>
+        </div>
+        
+        <!-- QR Code -->
+        <div id="qr-code-container" style='width: 120px; height: 120px; flex-shrink: 0;'></div>
+      </div>
+      
+      <div style='margin-top: 32px; text-align:center; color: #666;'>
+        <p>Gracias por volar con nosotros</p>
+        <p>Presenta este documento en el mostrador de check-in</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(contenedor);
+  
+  // Generar QR code
+  const qrContainer = contenedor.querySelector('#qr-code-container');
+  new QRCode(qrContainer, {
+    text: JSON.stringify(datosReserva),
+    width: 120,
+    height: 120,
+    colorDark: "#18005c",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  
+  html2canvas(contenedor, { scale: 2 }).then(canvas => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = 500;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    const x = (pageWidth - imgWidth) / 2;
+    const y = 60;
+    pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+    pdf.save(`check-in-${localStorage.getItem('codigoVuelo') || 'DC0000'}.pdf`);
+    document.body.removeChild(contenedor);
+  });
+}
+    // Cargar datos de la reserva desde localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+      // Datos del vuelo
+      document.getElementById('codigo-vuelo').textContent = localStorage.getItem('codigoVuelo') || 'DC0000';
+      const origen = localStorage.getItem('origenVuelo') || '---';
+      const destino = localStorage.getItem('destinoVuelo') || '---';
+      document.getElementById('ruta-vuelo').textContent = `${origen} → ${destino}`;
+      
+      // Datos del pasajero
+      const nombre = localStorage.getItem('nombrePasajero') || '---';
+      const apellidos = localStorage.getItem('apellidosPasajero') || '---';
+      document.getElementById('nombre-pasajero').textContent = `${nombre} ${apellidos}`;
+      
+      // Fecha del vuelo
+      document.getElementById('fecha-vuelo').textContent = localStorage.getItem('fechaVuelo') || '---';
+      
+      // Información del equipaje
+      const tipoEquipaje = localStorage.getItem('tipoEquipaje') || 'Sin equipaje';
+      const precioEquipaje = localStorage.getItem('precioEquipaje') || '0';
+      document.getElementById('equipaje-info').textContent = `${tipoEquipaje} (USD ${precioEquipaje})`;
+      
+      // Precio total (precio base + equipaje)
+      const precioBase = 150; // Precio base del vuelo
+      const precioEquipajeNum = parseFloat(precioEquipaje) || 0;
+      const total = precioBase + precioEquipajeNum;
+      document.getElementById('precio-total').textContent = `USD ${total.toFixed(2)}`;
+    });
+    
+    // Formatear número de tarjeta y detectar tipo
+    document.getElementById('numero-tarjeta').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+      let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+      e.target.value = formattedValue;
+      
+      // Detectar tipo de tarjeta basado en los primeros dígitos
+      const firstTwo = value.substring(0, 2);
+      const firstFour = value.substring(0, 4);
+      
+      // Resetear todos los logos
+      document.getElementById('logo-visa').classList.remove('opacity-100');
+      document.getElementById('logo-visa').classList.add('opacity-30');
+      document.getElementById('logo-mastercard').classList.remove('opacity-100');
+      document.getElementById('logo-mastercard').classList.add('opacity-30');
+      document.getElementById('logo-amex').classList.remove('opacity-100');
+      document.getElementById('logo-amex').classList.add('opacity-30');
+      
+      // Detectar tipo de tarjeta
+      if (firstTwo >= '40' && firstTwo <= '49') {
+        // Visa (empieza con 4)
+        document.getElementById('logo-visa').classList.remove('opacity-30');
+        document.getElementById('logo-visa').classList.add('opacity-100');
+      } else if (firstTwo >= '51' && firstTwo <= '55' || firstFour >= '2221' && firstFour <= '2720') {
+        // Mastercard (empieza con 51-55 o 2221-2720)
+        document.getElementById('logo-mastercard').classList.remove('opacity-30');
+        document.getElementById('logo-mastercard').classList.add('opacity-100');
+      } else if (firstTwo === '34' || firstTwo === '37') {
+        // American Express (empieza con 34 o 37)
+        document.getElementById('logo-amex').classList.remove('opacity-30');
+        document.getElementById('logo-amex').classList.add('opacity-100');
+      }
+    });
+    
+    // Formatear fecha de vencimiento
+    document.getElementById('fecha-vencimiento').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2, 4);
+      }
+      e.target.value = value;
+    });
+    
+    // Formatear CVV
+    document.getElementById('cvv').addEventListener('input', function(e) {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+    
+
+    
+    // Manejar envío del formulario
+    document.getElementById('form-pago').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Validaciones básicas
+      const numeroTarjeta = document.getElementById('numero-tarjeta').value.replace(/\s/g, '');
+      const fechaVencimiento = document.getElementById('fecha-vencimiento').value;
+      const cvv = document.getElementById('cvv').value;
+      
+      if (numeroTarjeta.length < 13 || numeroTarjeta.length > 19) {
+        alert('El número de tarjeta debe tener entre 13 y 19 dígitos');
+        return;
+      }
+      
+      if (!/^\d{2}\/\d{2}$/.test(fechaVencimiento)) {
+        alert('La fecha de vencimiento debe tener el formato MM/AA');
+        return;
+      }
+      
+      if (cvv.length < 3 || cvv.length > 4) {
+        alert('El CVV debe tener 3 o 4 dígitos');
+        return;
+      }
+      
+      // Simular procesamiento de pago
+      const submitButton = document.querySelector('button[type="submit"]');
+      const originalText = submitButton.textContent;
+      submitButton.textContent = 'Procesando...';
+      submitButton.disabled = true;
+      
+      setTimeout(() => {
+        mostrarVentanaExito();
+      }, 2000);
+    });
+  </script>
+  
+  <footer class="w-full h-16 bg-gray-100 flex items-center justify-center fixed bottom-0 left-0 z-40">
+    <span class="text-xs text-gray-500">© 2025 Despega-Cholis. Todos los derechos reservados.</span>
+  </footer>
+</body>
+</html> 

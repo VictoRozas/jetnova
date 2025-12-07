@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Despega-Cholis | Consulta tu vuelo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen font-inter bg-white">
+  <!-- Barra superior -->
+  <nav class="sticky top-0 z-50 h-16" style="background-color: #18005c;">
+    <div class="w-full h-full px-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-white font-bold text-xl tracking-tight">Jet Nova</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="conocenos.html" class="font-semibold text-white px-4 py-1.5 rounded-full" style="background-color: #4b3b8f;">Conócenos</a>
+      </div>
+    </div>
+  </nav>
+  <!-- Cuerpo principal -->
+  <div class="flex flex-col md:flex-row min-h-[calc(90vh-4rem)]">
+    <!-- Lado izquierdo: imagen y texto -->
+    <div class="relative flex-1 md:basis-3/5 flex flex-col justify-center items-center bg-cover bg-center" style="background-image: url('img/fondo_avion.jpg'); min-height: 350px;">
+      <div class="absolute inset-0 bg-gradient-to-r from-[#18005c]/90 via-[#18005c]/60 to-transparent"></div>
+      <div class="relative z-10 p-8 md:p-16 text-left w-full max-w-xl">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-lg">BIENVENIDO</h1>
+        <p class="text-lg md:text-xl text-white/90 mb-6 font-medium">Encuentra vuelos directos o con escalas de manera sencilla y visualiza todas tus opciones en un solo lugar.</p>
+      </div>
+    </div>
+    <!-- Lado derecho: formulario -->
+    <div class="flex-1 md:basis-2/5 flex flex-col justify-center items-center bg-white/90 py-12 px-6 md:px-16">
+      <h2 class="text-3xl md:text-5xl font-extrabold text-[#18005c] mb-6 text-center drop-shadow-lg">Busca un vuelo</h2>
+      <form id="form-vuelos" class="space-y-6 w-full flex flex-col items-center">
+        <div class="w-64">
+          <label for="origen" class="block text-sm font-semibold text-[#18005c] mb-1">Origen</label>
+          <input type="text" id="origen" name="origen" required placeholder="Ciudad de origen" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#b30f3b] focus:border-transparent transition-all duration-200 bg-white">
+        </div>
+        <div class="w-64">
+          <label for="destino" class="block text-sm font-semibold text-[#18005c] mb-1">Destino</label>
+          <input type="text" id="destino" name="destino" required placeholder="Ciudad de destino" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#b30f3b] focus:border-transparent transition-all duration-200 bg-white">
+        </div>
+        <div class="w-64">
+          <label for="tipo-vuelo" class="block text-sm font-semibold text-[#18005c] mb-1">Tipo de vuelo</label>
+          <select id="tipo-vuelo" name="tipo-vuelo" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#b30f3b] focus:border-transparent transition-all duration-200 bg-white">
+            <option value="directo">✈️ Directo</option>
+            <option value="escala1">🛫 1 Escala</option>
+            <option value="escala2">🛬 2 Escalas</option>
+            <option value="escala3">🛩️ 3 Escalas</option>
+          </select>
+        </div>
+        <button type="submit" class="w-64 font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 hover:shadow-lg focus:ring-4 focus:ring-[#b30f3b]/30" style="background-color: #b30f3b; color: white;">Buscar</button>
+      </form>
+      <div id="loading" class="hidden mt-6 text-center">
+        <span class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#b30f3b] align-middle"></span>
+        <span class="ml-3 text-[#b30f3b] font-semibold">Cargando resultados...</span>
+      </div>
+    </div>
+  </div>
+  <!-- Pie de página -->
+  <footer class="w-full h-16 bg-gray-100 flex items-center justify-center">
+    <span class="text-xs text-gray-500">© 2025 Despega-Cholis. Todos los derechos reservados.</span>
+  </footer>
+  <script>
+    document.getElementById('form-vuelos').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('loading').classList.remove('hidden');
+      setTimeout(function() {
+        const origen = document.getElementById('origen').value.trim();
+        const destino = document.getElementById('destino').value.trim();
+        const tipo = document.getElementById('tipo-vuelo').value;
+        localStorage.setItem('consultaVuelos', JSON.stringify({ origen, destino, tipo }));
+        window.location.href = 'resultados.html';
+      }, 1200);
+    });
+  </script>
+</body>
+</html>

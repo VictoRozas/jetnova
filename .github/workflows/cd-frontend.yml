@@ -1,0 +1,24 @@
+name: CD - Frontend Deploy (GitHub Pages)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "**/*.html"
+      - "**/*.js"
+      - "img/**"
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Validate project files
+        run: |
+          echo "Archivos del proyecto:"
+          ls -la
+
+      - name: Deploy info
+        run: echo "GitHub Pages se actualiza automáticamente al hacer push a main."
